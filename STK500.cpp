@@ -125,7 +125,7 @@ STK500::set_parameter()
   uint8_t param = getchar();
   uint8_t value = getchar();
   UNUSED(value);
-  if (!is_insync()) return;
+  if (UNLIKELY(!is_insync())) return;
   switch (param) {
   case HW_VER:
   case SW_MAJOR:
@@ -156,7 +156,7 @@ void
 STK500::get_parameter()
 {
   uint8_t param = getchar();
-  if (!is_insync()) return;
+  if (UNLIKELY(!is_insync())) return;
   uint8_t value = 0;
   switch (param) {
   case HW_VER:
@@ -198,7 +198,7 @@ STK500::set_device()
 {
   param_t param;
   read(&param, sizeof(param));
-  if (!is_insync()) return;
+  if (UNLIKELY(!is_insync())) return;
   m_prog->set_flash_pagesize(swap(param.pagesize));
   m_state = READY_STATE;
   response();
@@ -209,14 +209,14 @@ STK500::set_device_ext()
 {
   extparam_t extparam;
   read(&extparam, sizeof(extparam));
-  if (!is_insync()) return;
+  if (UNLIKELY(!is_insync())) return;
   response();
 }
 
 void
 STK500::enter_progmode()
 {
-  if (!is_insync()) return;
+  if (UNLIKELY(!is_insync())) return;
   if ((m_state != READY_STATE) || !m_prog->begin()) {
     illegal(NODEVICE);
     return;
@@ -228,7 +228,7 @@ STK500::enter_progmode()
 void
 STK500::leave_progmode()
 {
-  if (!is_insync()) return;
+  if (UNLIKELY(!is_insync())) return;
   if (m_state == PROG_STATE) m_prog->end();
   m_state = (m_state == PROG_STATE) ? READY_STATE : IDLE_STATE;
   response();
@@ -237,7 +237,7 @@ STK500::leave_progmode()
 void
 STK500::chip_erase()
 {
-  if (!is_insync()) return;
+  if (UNLIKELY(!is_insync())) return;
   m_prog->chip_erase();
   response();
 }
@@ -248,7 +248,7 @@ STK500::load_address()
   univ16_t addr;
   addr.low = getchar();
   addr.high = getchar();
-  if (!is_insync()) return;
+  if (UNLIKELY(!is_insync())) return;
   m_addr = addr.as_uint16;
   response();
 }
@@ -258,7 +258,7 @@ STK500::universal()
 {
   uint8_t buf[4];
   read(buf, sizeof(buf));
-  if (!is_insync()) return;
+  if (UNLIKELY(!is_insync())) return;
   uint8_t res = m_prog->transfer(buf);
   m_prog->await();
   response(res);
@@ -270,7 +270,7 @@ STK500::universal_multi()
   uint16_t bytes = getchar() + 1;
   uint8_t buf[bytes];
   read(buf, bytes);
-  if (!is_insync()) return;
+  if (UNLIKELY(!is_insync())) return;
   uint8_t* bp = buf;
   while (bytes--) m_prog->transfer(*bp++);
   response();
@@ -281,7 +281,7 @@ STK500::prog_flash()
 {
   uint8_t low = getchar();
   uint8_t high = getchar();
-  if (!is_insync()) return;
+  if (UNLIKELY(!is_insync())) return;
   m_prog->load_program_memory_page_low_byte(m_addr, low);
   m_prog->load_program_memory_page_high_byte(m_addr, high);
   m_addr += 1;
@@ -292,7 +292,7 @@ void
 STK500::prog_data()
 {
   uint8_t data = getchar();
-  if (!is_insync()) return;
+  if (UNLIKELY(!is_insync())) return;
   m_prog->write_eeprom_memory(m_addr, data);
   m_addr += 1;
   response();
@@ -303,7 +303,7 @@ STK500::prog_fuse()
 {
   uint8_t low = getchar();
   uint8_t high = getchar();
-  if (!is_insync()) return;
+  if (UNLIKELY(!is_insync())) return;
   m_prog->write_fuse_bits(low);
   m_prog->write_fuse_high_bits(high);
   response();
@@ -313,7 +313,7 @@ void
 STK500::prog_lock()
 {
   uint8_t lock = getchar();
-  if (!is_insync()) return;
+  if (UNLIKELY(!is_insync())) return;
   m_prog->write_lock_bits(lock);
   response();
 }
@@ -328,7 +328,7 @@ STK500::prog_page()
   uint8_t memtype = getchar();
   uint8_t buf[count];
   read(buf, count);
-  if (!is_insync()) return;
+  if (UNLIKELY(!is_insync())) return;
   if (memtype == 'F') {
     m_prog->write_program_memory(m_addr, buf, count);
   }
@@ -345,7 +345,7 @@ STK500::prog_fuse_ext()
   uint8_t low = getchar();
   uint8_t high = getchar();
   uint8_t ext = getchar();
-  if (!is_insync()) return;
+  if (UNLIKELY(!is_insync())) return;
   m_prog->write_fuse_bits(low);
   m_prog->write_fuse_high_bits(high);
   m_prog->write_extended_fuse_bits(ext);
@@ -355,7 +355,7 @@ STK500::prog_fuse_ext()
 void
 STK500::read_flash()
 {
-  if (!is_insync()) return;
+  if (UNLIKELY(!is_insync())) return;
   uint8_t low = m_prog->read_program_memory_low_byte(m_addr);
   uint8_t high = m_prog->read_program_memory_high_byte(m_addr);
   m_addr += 1;
@@ -365,7 +365,7 @@ STK500::read_flash()
 void
 STK500::read_data()
 {
-  if (!is_insync()) return;
+  if (UNLIKELY(!is_insync())) return;
   uint8_t data = m_prog->read_eeprom_memory(m_addr);
   m_addr += 1;
   response(data);
@@ -374,7 +374,7 @@ STK500::read_data()
 void
 STK500::read_fuse()
 {
-  if (!is_insync()) return;
+  if (UNLIKELY(!is_insync())) return;
   uint8_t low = m_prog->read_fuse_bits();
   uint8_t high = m_prog->read_fuse_high_bits();
   response(low, high);
@@ -383,7 +383,7 @@ STK500::read_fuse()
 void
 STK500::read_lock()
 {
-  if (!is_insync()) return;
+  if (UNLIKELY(!is_insync())) return;
   uint8_t bits = m_prog->read_lock_bits();
   response(bits);
 }
@@ -396,7 +396,7 @@ STK500::read_page()
   bytes.low = getchar();
   uint16_t count = bytes.as_uint16;
   uint8_t memtype = getchar();
-  if (!is_insync()) return;
+  if (UNLIKELY(!is_insync())) return;
   uint8_t buf[count];
   if (memtype == 'F') {
     m_prog->read_program_memory(buf, m_addr, count);
@@ -412,7 +412,7 @@ STK500::read_page()
 void
 STK500::read_sign()
 {
-  if (!is_insync()) return;
+  if (UNLIKELY(!is_insync())) return;
   uint8_t high = m_prog->read_signature_byte(0);
   uint8_t middle = m_prog->read_signature_byte(1);
   uint8_t low = m_prog->read_signature_byte(2);
@@ -422,7 +422,7 @@ STK500::read_sign()
 void
 STK500::read_osccal()
 {
-  if (!is_insync()) return;
+  if (UNLIKELY(!is_insync())) return;
   uint8_t cal = m_prog->read_calibration_byte();
   response(cal);
 }
@@ -430,7 +430,7 @@ STK500::read_osccal()
 void
 STK500::read_fuse_ext()
 {
-  if (!is_insync()) return;
+  if (UNLIKELY(!is_insync())) return;
   uint8_t low = m_prog->read_fuse_bits();
   uint8_t high = m_prog->read_fuse_high_bits();
   uint8_t ext = m_prog->read_extended_fuse_bits();
