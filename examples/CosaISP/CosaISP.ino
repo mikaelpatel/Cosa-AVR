@@ -32,7 +32,7 @@
 #include <AVR.h>
 
 #include "Cosa/Watchdog.hh"
-#include "Cosa/IOStream/Driver/UART.hh"
+#include "Cosa/UART.hh"
 
 Programmer isp;
 STK500 stk(&uart, &isp);
